@@ -1,0 +1,24 @@
+name: AWP API Monitor
+
+on:
+  schedule:
+    # Every 20 minutes. GitHub Actions cron uses UTC.
+    - cron: '*/20 * * * *'
+  workflow_dispatch:  # allow manual trigger from Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Probe API and notify on state change
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          API_URL: ${{ vars.API_URL || 'https://api.minework.net/api/iam/v1/me' }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: bash monitor.sh
