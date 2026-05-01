@@ -2,10 +2,10 @@ name: AWP API Monitor
 
 on:
   schedule:
-    # Every 20 minutes. GitHub Actions cron uses UTC.
     - cron: '*/10 * * * *'
-  workflow_dispatch:  # allow manual trigger from Actions tab
-
+  push:
+    branches: [main]
+  workflow_dispatch:
 jobs:
   ping:
     runs-on: ubuntu-latest
