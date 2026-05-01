@@ -104,40 +104,26 @@ main() {
     exit 1
   fi
 
-  local result status detail prev_state new_state
+  local result status detail
   result=$(probe)
   status="${result%%|*}"
   detail="${result##*|}"
   echo "[probe] $API_URL → $status ($detail)"
 
-  prev_state=$(read_prev_state)
-  echo "[state] previous=$prev_state"
+  local now
+  now=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
 
   if [[ "$status" == "ALIVE" ]]; then
-    new_state="UP"
+    msg="🟢 <b>API UP</b>%0A<b>Endpoint</b>: <code>$API_URL</code>%0A<b>Time</b>: $now%0A<b>Status</b>: $detail"
   else
-    new_state="DOWN"
+    msg="🔴 <b>API DOWN</b>%0A<b>Endpoint</b>: <code>$API_URL</code>%0A<b>Time</b>: $now%0A<b>Error</b>: $detail"
   fi
 
-  # Only notify on state change
-  if [[ "$prev_state" != "$new_state" ]]; then
-    echo "[transition] $prev_state → $new_state — sending alert"
-    local now
-    now=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-    if [[ "$new_state" == "DOWN" ]]; then
-      msg="🔴 <b>API DOWN</b>%0A<b>Endpoint</b>: <code>$API_URL</code>%0A<b>Time</b>: $now%0A<b>Error</b>: $detail"
-    else
-      msg="🟢 <b>API RECOVERED</b>%0A<b>Endpoint</b>: <code>$API_URL</code>%0A<b>Time</b>: $now%0A<b>Status</b>: $detail"
-    fi
-    if send_telegram "$msg"; then
-      echo "[alert] sent"
-      write_state "$new_state"
-    else
-      echo "[alert] FAILED — keeping prev_state to retry next cycle" >&2
-      exit 1
-    fi
+  if send_telegram "$msg"; then
+    echo "[alert] sent"
   else
-    echo "[no-op] state unchanged, no alert"
+    echo "[alert] FAILED" >&2
+    exit 1
   fi
 }
 
